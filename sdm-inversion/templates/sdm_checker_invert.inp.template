@@ -1,0 +1,28 @@
+#===============================================================================
+# SDM2025 CHECKERBOARD INVERT template (niter=N, nusrp=0).
+# Same geometry/dip/rake/patch/smoothing as production inv inp, BUT: data = the
+# synthetic noisy files (*_synth.dat, written by checker_add_noise.py), nusrp=0
+# (no offsets), slip output -> slip_dmcf_inverted.dat, data-fit -> inv_*.dat.
+# Run from the per-case dir AFTER forward+noise. NO blank lines.
+#===============================================================================
+ 0                                          # iearth 0=halfspace
+ 0.25                                       # poisson
+    1                                       # idisc auto
+    1                                       # ns segments (match production)
+    1    0.0            20.0   -1000.0   1.0   # is topdep width strike(-1000=auto) patch
+         -130.0         -50.0          8.0     # rake1 rake2 max_slip
+         2                                      # nft trace nodes
+         28.881001      87.572025   48.0  58.0  # lat lon topdip botdip
+         28.454859      87.511135   48.0  58.0
+  3  1.0  0                                  # ngd datunit nheader (ENU 3-comp)
+   'ns_synth.dat'                            # synthetic noisy data (relative to case dir)
+  1.00  1   90.0    0.0
+   'ew_synth.dat'
+  1.00  1   90.0   90.0
+   'up_synth.dat'
+  1.00  1    0.0    0.0
+   0                                         # nusrp = 0 (synthetic has no offsets)
+ 5000  '/ABS/PATH/ZHYRELAX.txt'             # niter (match production, e.g. 5000)
+ 1  0.05  0                                  # ismooth smoothing izhy (match production)
+ 'slip_dmcf_inverted.dat'                    # inverted slip output
+ 'inv_un.dat'   'inv_ue.dat'   'inv_uz.dat'  # data-fit outputs (no offsets file)

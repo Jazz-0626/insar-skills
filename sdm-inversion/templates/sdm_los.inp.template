@@ -1,0 +1,29 @@
+#===============================================================================
+# SDM2025 inp TEMPLATE — LOS-only inversion (asc + des tracks)
+# Use when you have LOS displacement fields instead of decomposed ENU.
+# type=1 const-LOS: each dataset gives a CONSTANT incidence & azimuth (deg).
+#   inc  = look incidence angle (e.g. ~34-41 for S1)
+#   azi  = satellite heading / look azimuth convention used by SDM
+#          (asc ~ -10 / 350 ; des ~ 190  — confirm against your geometry!)
+# For per-pixel inc/azi you need the full (non-const) data format; const is the
+# common simplification when the field's geometry is roughly uniform.
+#===============================================================================
+ 0
+ 0.25
+    1
+    1
+    1    0.0            20.0   -1000.0   1.0
+         -130.0         -50.0          8.0
+         2
+         28.881001      87.572025   48.0  58.0
+         28.454859      87.511135   48.0  58.0
+  2  1.0  0                                  # 2 datasets (asc, des)
+   'los_asc.dat'
+  1.00  1   39.0   -10.0                     # weight type inc azi  (ascending)
+   'los_des.dat'
+  1.00  1   39.0   190.0                     # descending
+   0                                        # no offsets (or add a corrgrn block as in DMCF template)
+ 5000  'ZHYRELAX.txt'
+ 1  0.05  0
+ 'slip_model.dat'
+ 'output_asc.dat'   'output_des.dat'

@@ -1,0 +1,30 @@
+#===============================================================================
+# SDM2025 CHECKERBOARD FORWARD template (niter=0, nusrp=0).
+# Derived from your production sdm_dmcf.inp by: (1) offsets -> 0, (2) niter -> 0,
+# (3) data files -> ABSOLUTE paths to the REAL ns/ew/up.dat (only their lat/lon
+#    obs locations are used), (4) slip line -> 'slip_dmcf_runtime.dat' (the INPUT
+#    true model to forward-model), (5) data-fit outputs -> fwd_*.dat (no offsets).
+# Geometry/dip/rake/patch MUST match the production inv inp. NO blank lines.
+# Run from the per-case dir; produces fwd_un/ue/uz.dat (col5 = prediction).
+#===============================================================================
+ 0                                          # iearth 0=halfspace
+ 0.25                                       # poisson
+    1                                       # idisc auto
+    1                                       # ns segments (match production)
+    1    0.0            20.0   -1000.0   1.0   # is topdep width strike(-1000=auto) patch
+         -130.0         -50.0          8.0     # rake1 rake2 max_slip
+         2                                      # nft trace nodes
+         28.881001      87.572025   48.0  58.0  # lat lon topdip botdip
+         28.454859      87.511135   48.0  58.0
+  3  1.0  0                                  # ngd datunit nheader (ENU 3-comp)
+   '/ABS/PATH/ns.dat'                        # REAL data file (obs locations only)
+  1.00  1   90.0    0.0
+   '/ABS/PATH/ew.dat'
+  1.00  1   90.0   90.0
+   '/ABS/PATH/up.dat'
+  1.00  1    0.0    0.0
+   0                                         # nusrp = 0 (NO offsets in synthetic)
+ 0  '/ABS/PATH/ZHYRELAX.txt'                 # niter = 0  -> pure forward
+ 1  0.05  0                                  # ismooth smoothing izhy (match production)
+ 'slip_dmcf_runtime.dat'                     # INPUT true slip model (copy of checker true)
+ 'fwd_un.dat'   'fwd_ue.dat'   'fwd_uz.dat'  # forward outputs (no offsets file, nusrp=0)

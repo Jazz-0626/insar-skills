@@ -1,0 +1,35 @@
+#===============================================================================
+# SDM2025 inp TEMPLATE — main fault (ENU 3D data + 3 ENU constant offsets)
+# '#'-lines are skipped (skipdoc.f). NO blank lines allowed. Paths relative to cwd.
+# Edit: segment count, trace nodes (from shapefile), width/dip/rake/cap/smoothing.
+# For a SINGLE straight fault set ns=1 and one segment with 2 trace nodes.
+# Tip: a sharp trace kink -> spurious deep slip; prefer a single straight segment.
+#===============================================================================
+ 0                                          # iearth: 0=halfspace 1=layered 2=user3D
+ 0.25                                       # poisson ratio
+    1                                       # idisc: 1=auto-discretise from trace
+    1                                       # ns = number of segments  (set 2,3,... for multi)
+#  --- segment 1 ---  (repeat the 5-line block per segment; node count = nft) ---
+    1    0.0            20.0   -1000.0   1.0   # is topdep_km width_km strike(-1000=auto) patch_km
+         -130.0         -50.0          8.0     # rake1 rake2 max_slip_m
+         2                                      # nft = number of trace nodes (>=2)
+         28.881001      87.572025   48.0  58.0  # lat lon topdip botdip  (topdip>botdip=antilistric)
+         28.454859      87.511135   48.0  58.0
+#  --- data block ---
+  3  1.0  0                                  # ngd datunit nheader  (3 datasets, unit=1 m, 0 header)
+   'ns.dat'                                  # N-S; type=1 const-LOS encoded as inc=90 azi=0
+  1.00  1   90.0    0.0                      #   weight type inc azi
+   'ew.dat'                                  # E-W; inc=90 azi=90
+  1.00  1   90.0   90.0
+   'up.dat'                                  # Up;  inc=0  azi=0
+  1.00  1    0.0    0.0
+#  --- corrections (ENU constant offsets) ---  (use 0 here for none) ---
+   3    'offset_grns.dat'                    # nusrp corrgrnfile  (3 = N,E,U offsets)
+  -0.15  0.15                               # offset bounds per param
+  -0.15  0.15
+  -0.15  0.15
+#  --- solver / outputs ---
+ 5000  'ZHYRELAX.txt'                        # niter relaxfile (copy ZHYRELAX.txt into cwd)
+ 1  0.05  0                                  # ismooth(1=slip) smoothing izhy
+ 'slip_model.dat'                            # slip output (16 cols; s0i_slip_model.dat per seg)
+ 'output_un.dat'   'output_ue.dat'   'output_uz.dat'  'output_offsets.dat'

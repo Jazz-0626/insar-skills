@@ -1,0 +1,31 @@
+#===============================================================================
+# SDM2025 inp TEMPLATE — second-stage fault (e.g. conjugate WBF) on DMCF RESIDUAL
+# Data = corridor-clipped residual (*_res_wD.dat) from stage 1. NO offset block.
+# Prereq: stage-1 done; residual extracted (true_res = output col3-col5-col6);
+#         clip_residual_by_trace.py run -> ns_res_w10.dat / ew_res_w10.dat / up_res_w10.dat
+# WARNING: if data-model correlation comes out NEGATIVE, the residual has no
+#          coherent signal for this fault -> it is NOT resolvable; do not merge.
+#===============================================================================
+ 0
+ 0.25
+    1
+    1                                       # single segment
+    1    0.0             8.0   -1000.0   1.0  # topdep width(km) strike(-1000=auto / or fix e.g. 357) patch
+         -130.0         -30.0          1.0    # rake1 rake2 max_slip  (cap small for a minor fault)
+         4                                      # nft trace nodes (from WBF.shp)
+         28.676557      87.375346   60.0  60.0  # uniform dip 60 (top=bot)
+         28.727414      87.345018   60.0  60.0
+         28.782238      87.344552   60.0  60.0
+         28.835662      87.363448   60.0  60.0
+  3  1.0  0
+   'ns_res_w10.dat'
+  1.00  1   90.0    0.0
+   'ew_res_w10.dat'
+  1.00  1   90.0   90.0
+   'up_res_w10.dat'
+  1.00  1    0.0    0.0
+   0                                        # no corrections (offsets already in stage 1)
+ 5000  'ZHYRELAX.txt'
+ 1  0.50  0                                  # stronger smoothing for a sparse minor fault
+ 'wbf_slip.dat'
+ 'wbf_un.dat'   'wbf_ue.dat'   'wbf_uz.dat'

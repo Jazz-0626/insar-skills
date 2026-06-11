@@ -1,6 +1,6 @@
 ---
 name: sdm-inversion
-description: SDM2025 断层滑移反演完整工作流 — 从已有 ENU/LOS 形变场(grd/tif) → quadtree 降采样 → 写 inp → 反演(单段/多段、可选两阶段 DMCF+WBF 走廊策略) → 2D/3D/map-view 成图 → 棋盘/分辨率测试(固定尺度棋盘 + 手动放置单块)。用于同震/震后断层滑移分布反演与分辨率验证。
+description: SDM2025 断层滑移反演完整工作流 — 从已有 ENU/LOS 形变场(grd/tif) → quadtree 降采样 → 写 inp → 反演(单段/多段、可选两阶段 DMCF+WBF 走廊策略) → 2D/3D/map-view 成图 → 棋盘/分辨率测试(固定尺度棋盘 + 手动放置单块) → PSGRN/PSCMP 同震库仑应力变化(ΔCFS)多深度计算与 GMT 成图。用于同震/震后断层滑移分布反演、分辨率验证与应力触发分析。
 ---
 
 ## SDM 断层滑移反演工作流
@@ -18,6 +18,7 @@ description: SDM2025 断层滑移反演完整工作流 — 从已有 ENU/LOS 形
 |----|------|
 | **sdm2025 可执行** | **第三方软件**(Rongjiang Wang, GFZ)，本仓库不分发。向作者/GFZ 索取 SDM2025 包，解压后记下 `$SDM2025/sdm2025`(Linux)；源码 `$SDM2025/SourceCode/*.f`、示例 `$SDM2025/InputFile/sdm2025_example_1/` |
 | ZHYRELAX.txt | SDM2025 包内自带的松弛因子序列文件，拷到工作目录即可(也可用示例里的) |
+| **PSGRN/PSCMP 2020**(仅阶段 7 需要) | **第三方软件**(R. Wang, GFZ)，本仓库不分发。GitHub 搜 "PSGRN-PSCMP" 或向作者索取；`gfortran -o psgrn2020 *.f -O3` 编译两程序，记下 `$PSGRN`/`$PSCMP` 路径 |
 | 本 skill 脚本 / 模板 / 参考 | 安装后位于 `<skill>/scripts/`、`<skill>/templates/`、`<skill>/reference/sdm_io_format.md`(见仓库根 README 的安装说明) |
 | python 环境 | 任一含 `numpy / rasterio / pyshp / matplotlib`(原生 mplot3d) 的环境(推荐 conda)。下文 `PY` 指该环境的 python |
 | 约定变量 | `SDM=$SDM2025/sdm2025`、`PY=<env>/bin/python`、`WORK=<干净工作目录>`；出图 `export MPLBACKEND=Agg` |
@@ -35,6 +36,8 @@ description: SDM2025 断层滑移反演完整工作流 — 从已有 ENU/LOS 形
 | `checker_add_noise.py` | 由 SDM 正演输出 + 高斯噪声生成合成观测(σ 用真实场远场 std，可 ENU/LOS 通用)，打印 SNR |
 | `checker_compare.py` | 多 case 真值/反演对比图(每行独立色条 + 块虚线框 + 恢复率/相关) |
 | `checker_run.sh` | 单 case 一键：构造真值 → 正演 → 加噪 → 反演(env 参数化，可复用任意断层) |
+| `sdm_to_pscmp.py` | slip_model.dat → 完整 PSCMP2020 inp(单矩形 subfault+icfs=1 接收断层)，打印 O 角点/单 dip 误差/Mw 自检提示 |
+| `plot_cfs_gmt.sh` | PSCMP snapshot(col18=CFS_Mas) → 多深度 ΔCFS GMT 图(env 参数化: R/DEPTHS/DATPAT/CLIP/TRACE/EPI) |
 
 ---
 
@@ -136,6 +139,40 @@ $PY $SKILL/checker_compare.py \
 ```
 **判读**：① `checker_add_noise.py` 打印的 **SNR<~1** 说明该分量地表信号在噪声级以下、该处不可分辨(恢复率再高也不可信)；② 恢复率 = 块内平均反演/块内平均真值；leakage(块外平均)被全断层稀释会偏乐观，务必结合**图上的虚假斑块与深部下涂**判读；③ 弱约束区(端部/深部)即便位置可辨，深度/幅度也不可靠。
 - 参考实现:定日 `Checkerboard/case_manual_block/`(block1 中部浅源恢复 88% 干净；block2 远 NE 深角 SNR≈0 仅位置可辨) 与 `case_2026_single3D/`(cell 5/8/10/12 扫描)。
+
+---
+
+### 阶段 7 —(可选)同震库仑应力变化 ΔCFS(PSGRN/PSCMP)
+用反演的 `slip_model.dat` 计算多接收深度的同震 ΔCFS。**两步法**(Wang et al. 2006)：PSGRN 对层状弹性模型预存点源格林函数 → PSCMP 按滑动模型线性叠加并算 `ΔCFS = Δτ + μ′(Δσn + ΔP)`(张性为正、>0 促滑)。软件 **PSGRN/PSCMP 2020**(R. Wang, GFZ；与 SDM 同作者，需自行获取；`gfortran -o psgrn2020 *.f -O3` 可编译)。
+
+**关键约定(已核 PSCMP 源码，照做即对)**：
+- 两程序从 stdin 读 inp 文件名：`echo 'x.inp' | psgrn2020`。
+- **SDM→PSCMP 滑动不翻号**：`pscdisc.f` 的 rake=atan2(−slip_d, slip_s) 与 SDM 同式 → `pos_s/pos_d/slip_stk/slip_ddip = SDM col4/5/8/9` 照抄(正断 ddip 为正)。换其它反演软件务必先核对该约定。
+- patch 按 `(pos_s,pos_d)` 中心定位、与行序无关；深度 = O_depth + pos_d·sin(dip)。
+- snapshot 输出 30 列(icfs=1,insar=0)：**col18 = CFS_Mas(指定接收断层 ΔCFS, Pa)**；col17=CFS_Max(最优面)。
+
+**流程**(每接收深度一套格林函数；本 skill 提供转换器与绘图)：
+```bash
+# 1) PSGRN 格林函数：从 templates/psgrn_coulomb.inp.template 起改(每深度一份)
+#    规则: r2≥断层到出图网格最远角距离; zs2≥断层底深; dzs≈patch 尺寸; nt=1 同震; 模型全弹性
+for Z in 00 05 10 15 20; do echo "psgrn_${Z}km.inp" | $PSGRN > run_${Z}km.log 2>&1; done
+# 2) 转换 + 计算(观测网格须在 r2 内)
+$PY $SKILL/sdm_to_pscmp.py --slip slip_model.dat --out pscmp_10km.inp \
+   --lat0 .. --lat1 .. --nlat .. --lon0 .. --lon1 .. --nlon .. \
+   --friction 0.4 --skempton 0.0 [--rrake -85] \
+   --grndir ./grnfcts_10km/ --outdir ./output_10km/ --snap coulomb.dat
+echo 'pscmp_10km.inp' | $PSCMP > run_10km.log 2>&1
+# 3) GMT 多深度成图(col18→bar, 红=加载/蓝=应力影, ±CLIP bar 截断)
+R=<region> TRACE=fault_trace.txt EPI=epicenter.txt ANNOT="Receiver: ..." \
+   bash $SKILL/plot_cfs_gmt.sh
+```
+
+**验证点(必做)**：① 转换器打印的 `O(ref corner)` 应与 SDM 迹线起点节点吻合(定日案例差 ~20 m)；② **PSCMP 日志的 Mw 自检**——它用转换后滑动独立复算 Mw，应与 SDM 反演差 <0.05(仅剪切模量差异；差 >0.2 = 滑动映射/单位/patch 尺寸出错)；③ 物理判读：正断应为"破裂深度内跨走向应力影+沿走向端部正叶、破裂以下深部加载"，反了即接收机制或滑动符号错。
+
+**参数建议**：μ′=0.4(定日诸文献同款)、Skempton 0~0.5；接收断层机制默认=震源滑动加权(与反演自洽)，与文献并排对比时用近纯机制(正断 `--rrake -85/-90`)——定日实测两版量值相当、仅叶瓣对称性不同。单 dip 近似误差转换器会打印(变 dip ~10° 时 <0.3 km，可忽略)。
+
+**坑**：GMT 6.3.0 的 `subplot` 与自定义 `-B/+t` 组合有内部 frame 合成 bug(报 `Offending option -BWrtS` 等非你所写参数)——`plot_cfs_gmt.sh` 已用经典 -X/-Y 布局绕开。
+- 参考实现:定日 5 深度(0/5/10/15/20 km)+两种接收 rake，`Coulomb/dmcf_single/`(教程 WORKFLOW_TUTORIAL.md + 文献对照 literature_comparison.md：远场断层加载 0.01–0.3 MPa、近断层 1–2 MPa，与已发表结果量级/形态一致)。
 
 ---
 

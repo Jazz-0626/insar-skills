@@ -1,0 +1,41 @@
+#=============================================================================
+# PSGRN2020 input TEMPLATE — Green's functions for coseismic Coulomb-stress
+# calculation (one file PER receiver depth). '#' lines are comments.
+# Run:  echo 'psgrn_10km.inp' | $PSGRNPSCMP/PSGRN2020/SourceCode/psgrn2020
+# Produces 46 GF files in the output dir (~seconds for elastic coseismic).
+#
+# PARAMETER RULES (edit the 4 numeric blocks below):
+#  obs depth : the receiver depth you will map dCFS at; one inp+GF set per depth
+#  r2        : >= distance from fault to the FARTHEST corner of your obs grid
+#  zs2       : >= max fault depth (else "depth range not covered" warnings)
+#  nzs       : so that dzs=(zs2-zs1)/nzs ~ your SDM patch size
+#  nt=1      : coseismic only (elastic); gravity factor 0 or 1 both fine
+#=============================================================================
+   10.0    1                  |obs_depth[km], 1=continental
+ 131    0.0   130.0   10.0    |nr, r1[km], r2[km], sampling_ratio(near-dense)
+  19    0.0    18.0           |nzs, zs1[km], zs2[km] (source-depth layers)
+   1    1.0                   |nt(=1 coseismic), time_window[day](dummy)
+ 0.05                         |wavenumber-integration accuracy (0.1-0.01)
+ 1.00                         |gravity factor (0=off, 1=on)
+ './grnfcts_10km/'            |output dir (mkdir first)
+ 'uz'  'ur'  'ut'
+ 'szz' 'srr' 'stt' 'szr' 'srt' 'stz'
+ 'tr'  'tt'  'rot' 'gd'  'gr'
+#-----------------------------------------------------------------------------
+# LAYERED MODEL: n_lines, then lines of
+#   no depth[km] vp[km/s] vs[km/s] rho[kg/m^3] etak[Pa*s] etam[Pa*s] alpha
+# Continuous interface = 1 line; discontinuity = 2 lines (upper+lower values).
+# COSEISMIC => pure elastic: etak=etam=0, alpha=1.
+# Example below = CRUST1.0 profile (replace with your region, e.g. from
+# crust1.0 at the epicenter; or 2 lines of a homogeneous halfspace with
+# vp/vs=1.732 to mimic an SDM Poisson-0.25 halfspace).
+#-----------------------------------------------------------------------------
+   7                          |int: no_model_lines
+1        0.000    6.0000    3.5200     2720.0    0.0E+00    0.0E+00    1.000
+2       34.490    6.0000    3.5200     2720.0    0.0E+00    0.0E+00    1.000
+3       34.490    6.3000    3.6800     2790.0    0.0E+00    0.0E+00    1.000
+4       51.040    6.3000    3.6800     2790.0    0.0E+00    0.0E+00    1.000
+5       51.040    6.6000    3.8200     2850.0    0.0E+00    0.0E+00    1.000
+6       68.980    6.6000    3.8200     2850.0    0.0E+00    0.0E+00    1.000
+7       68.980    8.3600    4.6300     3420.0    0.0E+00    0.0E+00    1.000
+#=======================end of input===========================================

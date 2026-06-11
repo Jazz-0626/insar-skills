@@ -5,7 +5,7 @@
 | 技能 | 作用 |
 |------|------|
 | [`pot-workflow`](pot-workflow/) | Sentinel-1 / LT-1 / ALOS-2 **像素偏移追踪 (POT)**：`xcorr_cc` 互相关 → 物理过滤 → 地理编码 → 去趋势 → GMT 成图 |
-| [`sdm-inversion`](sdm-inversion/) | **SDM2025 断层滑移反演**：形变场 → quadtree 降采样 → 写 inp → 反演（单/多段、两阶段 DMCF+WBF）→ 2D/3D/map-view 成图 → 棋盘/分辨率测试 |
+| [`sdm-inversion`](sdm-inversion/) | **SDM2025 断层滑移反演**：形变场 → quadtree 降采样 → 写 inp → 反演（单/多段、两阶段 DMCF+WBF）→ 2D/3D/map-view 成图 → 棋盘/分辨率测试 → PSGRN/PSCMP 同震库仑应力变化（ΔCFS）计算与 GMT 成图 |
 
 ## 安装
 
@@ -31,6 +31,7 @@ cp -r insar-skills/sdm-inversion  ~/.claude/skills/
 | **GMTSAR** + **GMT (≥6)** | POT 地理编码、绘图 | <https://github.com/gmtsar/gmtsar> |
 | **xcorr_cc** | POT 的 CUDA 互相关与 `pot_*.csh` 后处理 | 配套仓库 `xcorr_cc`（按其 README 编译，需 CUDA GPU + glib） |
 | **SDM2025** | 断层滑移反演内核（Rongjiang Wang, GFZ） | 向作者 / GFZ 索取（非自由软件，勿转发） |
+| **PSGRN/PSCMP 2020** | 库仑应力变化计算（仅 sdm-inversion 阶段 7 需要；同作者） | GitHub 搜 "PSGRN-PSCMP" 或向作者索取，`gfortran -o psgrn2020 *.f -O3` 编译 |
 | **Python 环境** | 降采样 / 成图 / 棋盘测试脚本 | `numpy rasterio pyshp matplotlib`（推荐 conda；3D 图需原生 mplot3d） |
 
 > 技能里的脚本/模板用 `$SDM2025`、`$SDM`、`$PY`、`$SKILL`、`$WORK` 等环境变量约定路径，不含任何机器特定绝对路径——使用前 `export` 好这些变量即可。
